@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: apache2
-# Definition:: apache_mod
+# Resource:: apache_mod
 #
-# Copyright 2008-20013, Chef Software, Inc.
+# Copyright 2016, Alexander van Zoest
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+resource_name :apache_mod
+provides :apache_mod
 
-define :apache_mod do
-  include_recipe 'apache2::default'
+property :name, String, name_property: true
 
-  template "#{node['apache']['dir']}/mods-available/#{params[:name]}.conf" do
-    source "mods/#{params[:name]}.conf.erb"
+default_action :create
+
+action :create do
+  #  declare_resource(:service, 'apache2', run_context: Chef.run_context, create_if_missing: true) do
+  #    action :nothing
+  #  end
+
+  template "#{node['apache']['dir']}/mods-available/#{new_resource.name}.conf" do
+    source "mods/#{new_resource.name}.conf.erb"
     mode '0644'
     notifies :reload, 'service[apache2]', :delayed
   end

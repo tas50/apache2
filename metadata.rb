@@ -19,3 +19,5 @@ supports 'freebsd'
 supports 'suse'
 supports 'opensuse'
 supports 'arch'
+
+depends 'compat_resource'

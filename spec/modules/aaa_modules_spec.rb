@@ -9,7 +9,7 @@ aaa_modules_without_config.each do |mod|
         property = load_platform_properties(:platform => platform, :platform_version => version)
 
         before(:context) do
-          @chef_run = ChefSpec::SoloRunner.new(:platform => platform, :version => version)
+          @chef_run = ChefSpec::SoloRunner.new(step_into: [:apache_mod, :apache_module], :platform => platform, :version => version)
           stub_command("#{property[:apache][:binary]} -t").and_return(true)
           @chef_run.converge(described_recipe)
         end

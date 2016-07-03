@@ -3,10 +3,6 @@ RSpec.shared_examples 'an apache2 module' do |a2module, a2conf, a2filename = nil
     allow(::File).to receive(:symlink?).and_return(true)
   end
 
-  it 'includes the `apache2::default` recipe' do
-    expect(chef_run).to include_recipe('apache2::default')
-  end
-
   module_name = a2module
   module_enable = true
   module_conf = a2conf

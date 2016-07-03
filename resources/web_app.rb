@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: apache2
-# Definition:: web_app
+# Resource:: web_app
 #
-# Copyright 2008-2013, Chef Software, Inc.
+# Copyright 2016, Alexander van Zoest
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +17,31 @@
 # limitations under the License.
 #
 
-define :web_app, :template => 'web_app.conf.erb', :local => false, :enable => true, :server_port => 80 do
-  application_name = params[:name]
+resource_name :web_app
+provides :web_app
 
-  include_recipe 'apache2::default'
-  include_recipe 'apache2::mod_rewrite'
-  include_recipe 'apache2::mod_deflate'
-  include_recipe 'apache2::mod_headers'
+property :application_name, String, name_property: true
+property :template, String, default: 'web_app.conf.erb'
+property :local, kind_of: [TrueClass, FalseClass], default: false
+property :enable, kind_of: [TrueClass, FalseClass], default: true
+property :server_port, Integer, default: 80
+property :cookbook, String
+property :params, kind_of: Hash, default: {}
+
+default_action :create
+
+action :create do
+  #  declare_resource(:service, 'apache2', run_context: Chef.run_context, create_if_missing: true) do
+  #    action :nothing
+  #  end
 
   template "#{node['apache']['dir']}/sites-available/#{application_name}.conf" do
-    source params[:template]
-    local params[:local]
+    source new_resource.template
+    local new_resource.local
     owner 'root'
     group node['apache']['root_group']
-    mode '0644'
-    cookbook params[:cookbook] if params[:cookbook]
+    mode 0o644
+    cookbook new_resource.cookbook if property_is_set?(:cookbook)
     variables(
       :application_name => application_name,
       :params           => params
@@ -41,8 +51,7 @@ define :web_app, :template => 'web_app.conf.erb', :local => false, :enable => tr
     end
   end
 
-  site_enabled = params[:enable]
-  apache_site params[:name] do
-    enable site_enabled
+  apache_site new_resource.application_name do
+    enable new_resource.enable
   end
 end

@@ -19,7 +19,7 @@ describe 'apache2::default' do
 
         context 'with valid apache configuration' do
           before(:context) do
-            @chef_run = ChefSpec::SoloRunner.new(:platform => platform, :version => version)
+            @chef_run = ChefSpec::SoloRunner.new(step_into: ['apache_conf'], :platform => platform, :version => version)
             stub_command("#{property[:apache][:binary]} -t").and_return(true)
             @chef_run.converge(described_recipe)
           end
@@ -134,6 +134,9 @@ describe 'apache2::default' do
           end
 
           %w(security charset).each do |config|
+            it "creates apache conf #{config}" do
+              expect(chef_run).to create_apache_conf(config)
+            end
             it "deletes #{property[:apache][:dir]}/conf-available/#{config}" do
               expect(chef_run).to delete_file("#{property[:apache][:dir]}/conf-available/#{config}")
             end

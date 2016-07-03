@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: apache2
-# Definition:: apache_config
+# Resource:: apache_config
 #
-# Copyright 2008-2013, Chef Software, Inc.
+# Copyright 2016, Alexander van Zoest
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,20 +16,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+resource_name :apache_config
+provides :apache_config
 
-define :apache_config, :enable => true do
-  include_recipe 'apache2::default'
+property :conf_name, String, name_property: true
+property :conf_path, String, default: "#{node['apache']['dir']}/conf-available"
+property :enable, kind_of: [TrueClass, FalseClass], default: true
 
-  conf_name = "#{params[:name]}.conf"
-  params[:conf_path] = params[:conf_path] || "#{node['apache']['dir']}/conf-available"
+default_action :create
 
-  if params[:enable]
+action :create do
+  #  declare_resource(:service, 'apache2', run_context: Chef.run_context, create_if_missing: true) do
+  #    action :nothing
+  #  end
+
+  if new_property.enable
     execute "a2enconf #{conf_name}" do
       command "/usr/sbin/a2enconf #{conf_name}"
       notifies :restart, 'service[apache2]', :delayed
       not_if do
         ::File.symlink?("#{node['apache']['dir']}/conf-enabled/#{conf_name}") &&
-          (::File.exist?(params[:conf_path]) ? ::File.symlink?("#{node['apache']['dir']}/conf-enabled/#{conf_name}") : true)
+          (::File.exist?(conf_path) ? ::File.symlink?("#{node['apache']['dir']}/conf-enabled/#{conf_name}") : true)
       end
     end
   else
@@ -38,5 +45,17 @@ define :apache_config, :enable => true do
       notifies :reload, 'service[apache2]', :delayed
       only_if { ::File.symlink?("#{node['apache']['dir']}/conf-enabled/#{conf_name}") }
     end
+  end
+end
+
+action :delete do
+  #  declare_resource(:service, 'apache2', run_context: Chef.run_context, create_if_missing: true) do
+  #    action :nothing
+  #  end
+
+  execute "a2disconf #{conf_name}" do
+    command "/usr/sbin/a2disconf #{conf_name}"
+    notifies :reload, 'service[apache2]', :delayed
+    only_if { ::File.symlink?("#{node['apache']['dir']}/conf-enabled/#{conf_name}") }
   end
 end
